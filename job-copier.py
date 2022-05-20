@@ -281,14 +281,37 @@ def prune_already_copied_points():
 # Execution Start
 #
 
+def validate_vault_arn(astring):
+    if not astring.startswith('arn:aws:backup:'):
+        raise ValueError
+    return astring
+
+def validate_role_arn(astring):
+    if not astring.startswith('arn:aws:iam:'):
+        raise ValueError
+    return astring
+
 parser = argparse.ArgumentParser(description='Copy AWS Backup recovery points between vaults.')
+parser.add_argument(
+    '--source',
+    required=True,
+    help='Name of the vault to copy from (example: SourceVault)'
+    )
+parser.add_argument(
+    '--destination',
+    required=True,
+    type=validate_vault_arn,
+    help='ARN of the destination vault (example: arn:aws:backup:eu-west-1:271595718296:backup-vault:NewProdVault)'
+    )
 parser.add_argument(
     '--arn',
     required=False,
+    type=validate_role_arn,
     help='ARN of role for copy jobs (default: arn:aws:iam::1234:role/service-role/AWSBackupDefaultServiceRole)'
     )
 
 args = parser.parse_args()
+console.log(f'Setting source vault to {args.source} and destination to {args.destination}')
 print(args.arn)
 print("working")
 sleep(3)
