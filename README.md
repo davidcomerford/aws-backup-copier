@@ -1,4 +1,4 @@
-# aws-backup-jobs-copier
+# AWS Backup Copier
 
 Copy recovery points between AWS Backup vaults
 

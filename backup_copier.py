@@ -309,10 +309,15 @@ parser.add_argument(
     type=validate_role_arn,
     help='ARN of role for copy jobs (default: arn:aws:iam::1234:role/service-role/AWSBackupDefaultServiceRole)'
     )
+parser.add_argument(
+    '--all',
+    required=False,
+    action='store_true',
+    help='Copy all recovery points. Does NOT check copy job history to remove already completed copies.'
+    )
 
 args = parser.parse_args()
 console.log(f'Setting source vault to {args.source} and destination to {args.destination}')
-print(args.arn)
 print("working")
 sleep(3)
 
