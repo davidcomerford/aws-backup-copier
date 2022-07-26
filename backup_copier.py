@@ -314,10 +314,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 console.log(f'Setting source vault to {args.source} and destination to {args.destination}')
-sleep(3)
 
 source_vault_name = args.source
 destination_vault_arn = args.destination
+copy_all_option = args.all
 
 # Sanity tests
 if test_vault_access(source_vault_name):
@@ -333,12 +333,14 @@ source_points= get_recovery_points()
 copy_jobs= get_copy_jobs_at_start()
 console.log(f'Found {len(copy_jobs)} copy jobs')
 
-prune_already_copied_points()
+if not copy_all_option: prune_already_copied_points()
 get_recovery_points_count(source_vault_name)
 get_points_left_to_copy_count()
 progress= make_progress_bar(recovery_point_count_queded)
 
 copy_role_arn = get_backup_role_for_copy()
+
+sleep(3)
 
 # Layout
 layout= make_layout()
