@@ -3,7 +3,6 @@
 from glob import glob
 from os import times
 from tokenize import String
-#from colorama import Style
 from rich import print
 from rich import box
 from rich.layout import Layout
@@ -27,10 +26,7 @@ max_conncurrent_copy_jobs = 2 # max 5
 table_update_frequency = 5  # in seconds
 
 
-# Variables - Don't Change
-source_vault_arn = "arn:aws:backup:eu-west-1:271595718296:backup-vault:pRoD"
-source_vault_name = "pRoD"
-destination_vault_arn = "arn:aws:backup:eu-west-1:271595718296:backup-vault:uat-RDS-Vault"
+# Runtime variables - Don't Change
 recovery_point_count = 0
 recovery_point_count_queded = 0
 copy_jobs_completed = 0
@@ -318,8 +314,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 console.log(f'Setting source vault to {args.source} and destination to {args.destination}')
-print("working")
 sleep(3)
+
+source_vault_name = args.source
+destination_vault_arn = args.destination
 
 # Sanity tests
 if test_vault_access(source_vault_name):
@@ -329,7 +327,8 @@ else:
     exit()
 
 # Get the ARNs and counts
-source_vault= get_vault_details('pRoD')
+source_vault= get_vault_details(source_vault_name)
+source_vault_arn = source_vault['BackupVaultArn']
 source_points= get_recovery_points()
 copy_jobs= get_copy_jobs_at_start()
 console.log(f'Found {len(copy_jobs)} copy jobs')
@@ -357,15 +356,14 @@ with Live(layout, refresh_per_second=1, screen=True):
         for index in range(len(source_points)):
             if len(jobs_in_flight) < max_conncurrent_copy_jobs:
 
-                current_source_point_arn= source_points[0]['RecoveryPointArn']
+                current_source_point_arn = source_points[0]['RecoveryPointArn']
 
                 # Create copy job
-#                copy_job_id= "ABF93B0E-1622-4FCA-B087-26C1AF4B2EA2" # mock
                 copy_job_response = backup_client.start_copy_job(
-                    RecoveryPointArn=current_source_point_arn,
-                    SourceBackupVaultName=source_vault_name,
-                    DestinationBackupVaultArn=destination_vault_arn,
-                    IamRoleArn=get_backup_role_for_copy()
+                    RecoveryPointArn = current_source_point_arn,
+                    SourceBackupVaultName = source_vault_name,
+                    DestinationBackupVaultArn = destination_vault_arn,
+                    IamRoleArn = get_backup_role_for_copy()
                 )
                 copy_job_id = copy_job_response['CopyJobId']
 
@@ -373,7 +371,7 @@ with Live(layout, refresh_per_second=1, screen=True):
                 job_details= get_copy_job_details(copy_job_id)
 
                 # Add the source point arn to the job_details dict to display in the table
-                job_details['RecoveryPointArn']= current_source_point_arn
+                job_details['RecoveryPointArn'] = current_source_point_arn
 
                 # Add the job details to the jobs_in_flight dict
                 jobs_in_flight.append(job_details)
@@ -400,7 +398,7 @@ with Live(layout, refresh_per_second=1, screen=True):
                         layout["right"].update(make_destination_vault_panel())
 
                         # Check if it's done
-                        state= get_copy_job_details(copy_job_id)['State']
+                        state = get_copy_job_details(copy_job_id)['State']
                         if state == 'COMPLETED':
 
                             update_progress()
@@ -408,10 +406,7 @@ with Live(layout, refresh_per_second=1, screen=True):
                     sleep(table_update_frequency)
         update_progress()
 
-        # while True:
-        #     sleep(0.1)
-        #     update_jobs_table('fdsfd',{'CopyJobId':'f','BackupSizeInBytes':'3','CreationDate':datetime.now(),'CompletionDate':datetime.now(),'State':'yeeting'})
         sleep(10)
-        finisihed= True
+        finisihed = True
 console.log(f'Copied {copy_jobs_completed} recovery points')
 console.log('Done')
